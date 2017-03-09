@@ -15,6 +15,7 @@
 *.o
 *.so
 *.pickle
+*.json
 
 # Packages #
 ############
