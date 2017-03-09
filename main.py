@@ -12,9 +12,9 @@ from collections import OrderedDict
 from my_utils import flatten,split_symbols,time_dec
 from oauth2client.service_account import ServiceAccountCredentials
 
-# scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-# creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-# client = gspread.authorize(creds)
+scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
+client = gspread.authorize(creds)
 
 
 def get_symbols_email(user,password,host = 'imap.gmail.com', mailbox = "INBOX"):
@@ -87,8 +87,8 @@ def get_data_and_filter(symbols):
             pass
     return scraped_data
 
-	
-	
+
+
 def get_finviz_data(data):
     master = {}
     for i in data:
@@ -106,8 +106,8 @@ def get_finviz_data(data):
     master.columns = ['symbol','name','pe','peg','pb','low','high','Dividend','price']
     return master
 
-	
-	
+
+
 def get_shiller(data):
     shiller = OrderedDict()
     for i in data:
@@ -162,26 +162,26 @@ def get_enterprise(data):
         enterprise = np.float64("nan")
     return enterprise
 
-	
-	
+
+
 def combine_enter_fcf(data):
     for i in data:
         try:
             yield get_enterprise(data[i]['guru_focus_ent'])/get_fcf(data[i]['market_watch'])
         except:
             yield np.float64('nan')
-			
 
 
 
-			
-@time_dec		
+
+
+@time_dec
 def make_the_dataframe(list_of_symbols):
     data = get_data_and_filter(list_of_symbols)
 
     master = get_finviz_data(data)
-    master['shiller'] = get_shiller(data).values()
-    master['ratio']= [i for i in combine_enter_fcf(data)]
+    master['Shiller P/E'] = get_shiller(data).values()
+    master['Enterprise/FCF Ratio']= [i for i in combine_enter_fcf(data)]
     return master
 
 def numberToLetters(q):
@@ -220,26 +220,24 @@ def add_to_sheets(dataframe):
         cell.value = val
     sheet.update_cells(cell_list)
 
-list_of_symbols = [i for i in split_symbols(get_symbols_email(user ='routmanapp@gmail.com',password = pswd))]
-print list_of_symbols
-master = make_the_dataframe(list_of_symbols).sort_index()
-print master
-# if __name__ == "__main__":
-    # attemps = 0
+# list_of_symbols = [i for i in split_symbols(get_symbols_email(user ='routmanapp@gmail.com',password = pswd))]
+# master = make_the_dataframe(list_of_symbols).sort_index()
+if __name__ == "__main__":
+    attemps = 0
 
-    # while True:
-        # try:
-            # dataframe = make_dataframe([i for i in (split_symbols(get_symbols_email(user = 'routmanapp@gmail.com',password = "pswd")))])
-            # name_of_sheet =  "Stock Report " + str((datetime.datetime.now()- datetime.timedelta(hours = 5)).strftime('%Y-%m-%d %H:%M'))
-            # sheet = client.create(name_of_sheet)
-            # sheet.share('yaschaffel@gmail.com',perm_type = 'user',role = 'writer')
+    while True:
+        try:
+            master = make_the_dataframe([i for i in split_symbols(get_symbols_email(user ='routmanapp@gmail.com',password = pswd))])
+            name_of_sheet =  "Stock Report " + str((datetime.datetime.now()- datetime.timedelta(hours = 5)).strftime('%Y-%m-%d %H:%M'))
+            sheet = client.create(name_of_sheet)
+            sheet.share('yaschaffel@gmail.com',perm_type = 'user',role = 'writer')
             # sheet.share('djz@routmanninvestment.com',perm_type = 'user',role = 'writer')
             # sheet.share('Aron.routman@routmanninvestment.com',perm_type = 'user',role = 'writer')
-            # sheet = client.open(name_of_sheet).sheet1
-            # add_to_sheets(dataframe)
-            # print 'success'
-        # except Exception as e:
-            # print e
-            # attemps += 1
-            # print attemps
-        # time.sleep(10)
+            sheet = client.open(name_of_sheet).sheet1
+            add_to_sheets(master.set_index('symbol').sort_index().reset_index())
+            print 'success'
+        except Exception as e:
+            print e
+            attemps += 1
+            print attemps
+        time.sleep(10)
