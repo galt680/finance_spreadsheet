@@ -37,19 +37,7 @@ def get_symbols_email(user,password,host = 'imap.gmail.com', mailbox = "INBOX"):
 
 
 
-def make_dataframe(symbols):
-    master,new_symbols = get_finviz_data(symbols)
-    for i in new_symbols:
-        if i in list(master['symbol']):
-            pass
-        else:
-            print "Missing symbol",i
-    print len(master),len(symbols)
-    master['Enterprise/Free Cash Flow'] = [i for i in combine_enter_fcf(new_symbols)]
-    print master, 'Try2'
-    master['shiller'] = get_shiller(new_symbols).values()
-    print master , 'Try3'
-    return master
+
 
 def get_data_and_filter(symbols):
     scraped_data = {}
