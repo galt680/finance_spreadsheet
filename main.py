@@ -73,7 +73,7 @@ def get_data_and_filter(symbols):
             scraped_data[i]['guru_focus_shiller'] = guru_focus_shiller
         except:
             pass
-    return scraped_data
+    return scraped_data,failed_symbols
 
 
 
@@ -165,8 +165,8 @@ def combine_enter_fcf(data):
 
 @time_dec
 def make_the_dataframe(list_of_symbols):
-    data = get_data_and_filter(list_of_symbols)
-
+    data,failed_symbols = get_data_and_filter(list_of_symbols)
+	print failed_symbols
     master = get_finviz_data(data)
     master['Shiller P/E'] = get_shiller(data).values()
     master['Enterprise/FCF Ratio']= [i for i in combine_enter_fcf(data)]
