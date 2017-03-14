@@ -10,11 +10,37 @@ import pandas as pd
 from passwords import pswd
 from collections import OrderedDict
 from my_utils import flatten,split_symbols,time_dec
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 from oauth2client.service_account import ServiceAccountCredentials
 
 scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 client = gspread.authorize(creds)
+def send_failed_symbols(failed_symbols):
+    body = "The following symbols have failed, there was either a typo, a misplaced comma or the symbol doesn't exist:\n"
+    for i in failed_symbols:
+        body+= i +'\n'
+    fromaddr = "routmanapp@gmail.com"
+#     toaddr = "aronroutman@sbcglobal.net"
+    toaddr = "yaschaffel@gmail.com,djz@routmanninvestment.com"
+    msg = MIMEMultipart()
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
+    msg['Subject'] = "Failed Symbols"
+
+
+    msg.attach(MIMEText(body, 'plain'))
+
+
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login("routmanapp@gmail.com", '85057047r')
+    text = msg.as_string()
+    server.sendmail(fromaddr, toaddr.split(','), text)
+    server.quit()
 
 
 def get_symbols_email(user,password,host = 'imap.gmail.com', mailbox = "INBOX"):
@@ -166,7 +192,9 @@ def combine_enter_fcf(data):
 @time_dec
 def make_the_dataframe(list_of_symbols):
     data,failed_symbols = get_data_and_filter(list_of_symbols)
-    print failed_symbols
+    if failed_symbols:
+        send_failed_symbols(failed_symbols)
+    print len(data)+len(failed_symbols)
     master = get_finviz_data(data)
     master['Shiller P/E'] = get_shiller(data).values()
     master['Enterprise/FCF Ratio']= [i for i in combine_enter_fcf(data)]
@@ -219,7 +247,7 @@ if __name__ == "__main__":
             name_of_sheet =  "Stock Report " + str((datetime.datetime.now()- datetime.timedelta(hours = 5)).strftime('%Y-%m-%d %H:%M'))
             sheet = client.create(name_of_sheet)
             sheet.share('yaschaffel@gmail.com',perm_type = 'user',role = 'writer')
-            # sheet.share('djz@routmanninvestment.com',perm_type = 'user',role = 'writer')
+            sheet.share('djz@routmanninvestment.com',perm_type = 'user',role = 'writer')
             # sheet.share('Aron.routman@routmanninvestment.com',perm_type = 'user',role = 'writer')
             sheet = client.open(name_of_sheet).sheet1
             add_to_sheets(master.set_index('symbol').sort_index().reset_index())
