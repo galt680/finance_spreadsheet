@@ -241,7 +241,7 @@ def add_to_sheets(dataframe):
 if __name__ == "__main__":
     attemps = 0
 
-    while True:
+    while (datetime.datetime.now().hour-4) < 23:
         try:
             master = make_the_dataframe([i for i in split_symbols(get_symbols_email(user ='routmanapp@gmail.com',password = pswd))])
             name_of_sheet =  "Stock Report " + str((datetime.datetime.now()- datetime.timedelta(hours = 5)).strftime('%Y-%m-%d %H:%M'))
