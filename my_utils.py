@@ -11,8 +11,8 @@ def flatten(container):
         else:
             flattened_list.append(thing)
     return flattened_list
-    
-    
+
+
 def split_symbols(block_of_text):
     for sublist in range(len(block_of_text)):
         for block in block_of_text[sublist][0].splitlines():
@@ -20,13 +20,13 @@ def split_symbols(block_of_text):
                 for syms in individual_symbol.split():
                     yield syms
 
-                    
+
 def time_dec(func):
     def timed(*args,**kwargs):
         ts = time.time()
         result = func(*args,**kwargs)
         te = time.time()
-        print te - ts
+        print (te - ts)/60
         return result
-    return timed  
-    
+    return timed
+

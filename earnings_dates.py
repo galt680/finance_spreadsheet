@@ -30,7 +30,7 @@ worksheet = sheet.worksheet('Dates')
 #iterate over the symbols and get the earning date from nasdaq
 #
 def get_data():
-    
+
     data = {}
     for symbol in symbols:
         r = requests.get('http://www.nasdaq.com/earnings/report/%s'%symbol)
@@ -39,7 +39,7 @@ def get_data():
 
         data[symbol] = soup.select('h2')[0].text.strip()[-12:]
 
-        time.sleep(random.randrange(5,7))
+        time.sleep(random.randrange(random.randrange(5,7),random.randrange(11,15)))
 
 
     #create pandas dataframe using the symbols as the index
@@ -54,7 +54,7 @@ def get_data():
 
     return df.sort_index()
 
-    
+
 
 
 def add_to_sheet(df,index= None,data = None):
@@ -62,7 +62,7 @@ def add_to_sheet(df,index= None,data = None):
         row = i[0] + 2
         sym = i[1][0]
         edate = i[1][1][0]
-        
+
         worksheet.update_cell(row,index,sym)
         worksheet.update_cell(row,data,edate)
     return True
@@ -74,26 +74,30 @@ def add_to_sheet(df,index= None,data = None):
 #drop the Not Available ones for sorting by date
 def resort_index_df(df):
     df = df.reset_index().set_index('dates').sort_index(ascending = True).drop('Not Available')
+
     #convert index to timestamp from str
     df.index =[i for i in map(lambda x:pd.Timestamp(x),
               df.reset_index().set_index('dates').sort_index(
-              ascending = True).drop('Not Available').index)] 
-    df.sort_index(ascending = True,inplace = True)
-    
-    #switch index to str from pd.Timestamp 
+              ascending = True).drop('Not Available').index)]
+    #sort by dates than symbols within dates
+    df = df.reset_index().sort_values(by = ['level_0','index']).set_index('level_0')
+    #switch index to str from pd.Timestamp
     df.index = [[i for i in map(lambda x:str(x)[:-9],df.index)]]
     return df
-    
+def waste_time():
+    time.sleep(60*random.randrange(10,45))
 @time_dec
 def main():
+    waste_time()
     df = get_data()
     worksheet.update_cell(1,1,'Symbol')
     worksheet.update_cell(1,2,'Date')
     worksheet.update_cell(1,5,'Date')
     worksheet.update_cell(1,6,'Symbol')
     add_to_sheet(df,index = 1,data = 2)
-    add_to_sheet(resort_index_df(df),index = 5,data = 6)    
+    add_to_sheet(resort_index_df(df),index = 5,data = 6)
 
 if __name__ == "__main__":
     main()
-    
+    print('done')
+
