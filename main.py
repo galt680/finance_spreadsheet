@@ -37,7 +37,7 @@ def send_failed_symbols(failed_symbols):
 
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login("routmanapp@gmail.com", '85057047r')
+    server.login("routmanapp@gmail.com", pswd)
     text = msg.as_string()
     server.sendmail(fromaddr, toaddr.split(','), text)
     server.quit()

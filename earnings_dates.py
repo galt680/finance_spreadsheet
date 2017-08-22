@@ -1,4 +1,5 @@
 import bs4
+import re
 import time
 import random
 import gspread
@@ -39,7 +40,7 @@ def get_data():
 
         data[symbol] = soup.select('h2')[0].text.strip()[-12:]
 
-        time.sleep(random.randrange(random.randrange(5,7),random.randrange(11,15)))
+        time.sleep(random.randrange(random.randrange(3,7),random.randrange(8,11)))
 
 
     #create pandas dataframe using the symbols as the index
@@ -73,22 +74,20 @@ def add_to_sheet(df,index= None,data = None):
 #resort the df to make the dates the index sort by date
 #drop the Not Available ones for sorting by date
 def resort_index_df(df):
-    df = df.reset_index().set_index('dates').sort_index(ascending = True).drop('Not Available')
+    df = df.reset_index().set_index('dates').sort_index(ascending = True)
+    """filter out the symbols that dont have earnings dates or the
+       date already passed; use regex to change to 'Not Available if
+       doesnt have date info'"""
 
     #convert index to timestamp from str
-    df.index =[i for i in map(lambda x:pd.Timestamp(x),
-              df.reset_index().set_index('dates').sort_index(
-              ascending = True).drop('Not Available').index)]
-    #sort by dates than symbols within dates
-    df = df.reset_index().sort_values(by = ['level_0','index']).set_index('level_0')
-    #switch index to str from pd.Timestamp
-    df.index = [[i for i in map(lambda x:str(x)[:-9],df.index)]]
-    return df
+    df.index =[i if re.search(r'''\d{2},.\d{4}''',i) else 'Not Available' for i in df.index]
+    df.sort_index(ascending = True,inplace = True)
+    return df.drop('Not Available')
 def waste_time():
     time.sleep(60*random.randrange(10,45))
-@time_dec
+# @time_dec
 def main():
-    waste_time()
+    # waste_time()
     df = get_data()
     worksheet.update_cell(1,1,'Symbol')
     worksheet.update_cell(1,2,'Date')
